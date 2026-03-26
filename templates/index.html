@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block body %}
+    <h1>Task Manager</h1>
+
+    <h3></h3>
+
+    <h3>All Tasks</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Blocked By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+                <tr>
+                    <td>{{ task["title"] }}</td>
+                    <td>{{ task["description"] }}</td>
+                    <td>{{ task["due_date"] }}</td>
+                    <td>{{ task["status"] }}</td>
+                    <td>{{ task["blocked_by"] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
