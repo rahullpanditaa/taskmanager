@@ -33,9 +33,14 @@ def create_task():
     title = request.form.get("title")
     description = request.form.get("description")
     due_date = request.form.get("due_date")
+    blocked_by = request.form.get("blocked_by")
     if not title or description or due_date:
         ...
 
     # Insert task into db
-    db.execute('INSERT INTO "tasks" ("title", "description", "due_date", "status") VALUES (?, ?, ?, ?);',
-               title, description, due_date, "to-do")
+    if blocked_by:
+        blocked_by = int(blocked_by)
+    db.execute('INSERT INTO "tasks" ("title", "description", "due_date", "status", "blocked_by") VALUES (?, ?, ?, ?, ?);',
+               title, description, due_date, "to-do", blocked_by if blocked_by else None)
+    
+    return redirect("/")
