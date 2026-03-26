@@ -7,7 +7,19 @@
 {% block body %}
     <h1>Task Manager</h1>
 
-    <h3></h3>
+    <h3>Add a Task</h3>
+    <form action="/create" method="post">
+        <input type="text" name="title" autofocus autocomplete="off" placeholder="Enter task">
+        <input type="text" name="description" autocomplete="off" placeholder="Describe the task">
+        <input type="datetime-local" name="due_date" autocomplete="off" placeholder="Due date">
+        <select name="blocked_by">
+            <option selected value="">--Blocked by--</option>
+            {% for task in tasks %}
+                <option value="{{ task['id'] }}">{{ task["title"] }}</option>
+            {% endfor %}
+            </select>
+        <button type="submit">Add Task</button>
+    </form>
 
     <h3>All Tasks</h3>
     <table>
@@ -27,7 +39,13 @@
                     <td>{{ task["description"] }}</td>
                     <td>{{ task["due_date"] }}</td>
                     <td>{{ task["status"] }}</td>
-                    <td>{{ task["blocked_by"] }}</td>
+                    <!-- <td>{{ task["blocked_by"] }}</td> -->
+                     <td>{% if task["blocked_by_title"] %}
+                            {{ task["blocked_by_title"] }}
+                        {% else %}
+                        NULL
+                        {% endif %}
+                     </td>
                 </tr>
             {% endfor %}
         </tbody>
