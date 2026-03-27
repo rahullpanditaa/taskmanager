@@ -63,3 +63,34 @@ def delete():
     db.execute('DELETE FROM "tasks" WHERE "id"=?;', id)
 
     return redirect("/")
+
+@app.route("/update", methods=["POST"])
+def update():
+    # User can only reach this route via POST
+
+    # Validate form submitted
+    id = request.form.get("id")
+    title = request.form.get("title")
+    description = request.form.get("description")
+    due_date = request.form.get("due_date")
+
+    # Minimal validation, since html forms will be replaced by Flutter
+    if not id or not title or not description or not due_date:
+        return redirect("/")
+    
+    status = request.form.get("status")
+    if not status or status not in ["to-do", "in progress", "done"]:
+        return redirect("/")
+    
+    #TODO: Validate blocked by id later
+    blocked_by = request.form.get("blocked_by")
+
+    # Update db
+    db.execute('UPDATE "tasks" SET "title"=?, "description"=?, "due_date"=?, "status"=?, "blocked_by"=? WHERE "id"=?;',
+               title, description, due_date, status, int(blocked_by) if blocked_by else None, id)
+    
+    return redirect("/")
+
+
+
+    
