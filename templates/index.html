@@ -17,7 +17,7 @@
             {% for task in tasks %}
                 <option value="{{ task['id'] }}">{{ task["title"] }}</option>
             {% endfor %}
-            </select>
+        </select>
         <button type="submit">Add Task</button>
     </form>
 
@@ -57,4 +57,29 @@
             {% endfor %}
         </tbody>
     </table>
+    <h3>Update a Task</h3>
+    <form action="/update" method="post">
+        <select name="id">
+            <option selected value="">--Select a Task--</option>
+            {% for task in tasks %}
+                <option value="{{ task['id'] }}">{{ task["title"] }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="title" placeholder="New title">
+        <input type="text" name="description" placeholder="New description">
+        <input type="datetime-local" name="due_date" placeholder="Change due date">
+        <select name="status">
+            <option selected value="">--Update status</option>
+            <option value="to-do">To-Do</option>
+            <option value="in progress">In Progress</option>
+            <option value="done">Done</option>
+        </select>
+        <select name="blocked_by">
+            <option selected value="">--Blocked by--</option>
+            {% for task in tasks %}
+                <option value="{{ task['id'] }}">{{ task["title"] }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Update</button>
+    </form>
 {% endblock %}
