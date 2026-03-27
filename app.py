@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Connect to sqlite db
 db = SQL("sqlite:///task_manager.db")
 
-@app.route("/")
+@app.route("/tasks")
 def index():
     # Get all tasks from db
     rows = db.execute("""
@@ -23,11 +23,11 @@ def index():
                     LEFT JOIN tasks b
                     ON t.blocked_by = b.id;
                       """)
-    return render_template("index.html", tasks=rows)
+    return jsonify(rows), 200
 
 @app.route("/create", methods=["POST"])
 def create_task():
-    # Can only reach this route via POST - form submission
+    # Can only reach this route via POST
 
     # Parse form data as json
     if request.is_json:
@@ -70,26 +70,37 @@ def create_task():
         return jsonify({"error": "Content-Type must be application/json"}), 415
 
 @app.route("/delete", methods=["POST"])
-def delete():
-    # User can only reach this route via POST - form submission
+def delete_task():
+    # User can only reach this route via POST
 
-    # Validate id
-    id = request.form.get("id")
-    try:
-        id = int(id)
-    except ValueError:
-        return redirect("/")
+    if request.is_json:
+        data: dict = request.get_json()
+
+        # Validate id
+        id = data.get("id")
+        try:
+            id = int(id)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid task id"}), 400
+        
+        # Update tasks which are blocked by given task id - set blocked by to NULL
+        db.execute('UPDATE "tasks" SET "blocked_by"=? WHERE "blocked_by"=?;', None, id)
+
+        # Delete task from db
+        rows = db.execute('DELETE FROM "tasks" WHERE "id"=?;', id)
+        
+        # If no rows were deleted
+        if rows == 0:
+            return jsonify({"error": "Invalid task id - no matching task found"}), 400
+        
+        # return response
+        return jsonify({"message": "Task deleted"}), 200
     
-    # Update tasks which are blocked by given task id - blocked by NULL
-    db.execute('UPDATE "tasks" SET "blocked_by"=? WHERE "blocked_by"=?;', None, id)
-
-    # Delete given task from db
-    db.execute('DELETE FROM "tasks" WHERE "id"=?;', id)
-
-    return redirect("/")
+    else:
+        return jsonify({"error": "Content-Type must be application/json"}), 415
 
 @app.route("/update", methods=["POST"])
-def update():
+def update_task():
     # User can only reach this route via POST
 
     # Validate form submitted
