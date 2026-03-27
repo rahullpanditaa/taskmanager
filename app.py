@@ -1,5 +1,5 @@
 from cs50 import SQL
-from flask import Flask, render_template, redirect, request, jsonify
+from flask import Flask, request, jsonify
 
 # Configure Flask app
 app = Flask(__name__)
@@ -48,7 +48,7 @@ def create_task():
         if blocked_by:
             try:
                 blocked_by = int(blocked_by)
-            except ValueError:
+            except (ValueError, TypeError):
                 return jsonify({"error": "Invalid blocked_by"}), 400
         else:
             blocked_by = None
