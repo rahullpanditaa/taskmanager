@@ -35,7 +35,7 @@ def create_task():
     due_date = request.form.get("due_date")
     blocked_by = request.form.get("blocked_by")
     if not title or description or due_date:
-        ...
+        return redirect("/")
 
     # Insert task into db
     if blocked_by:

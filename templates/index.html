@@ -30,6 +30,7 @@
                 <th>Due Date</th>
                 <th>Status</th>
                 <th>Blocked By</th>
+                <!-- <th></th> -->
             </tr>
         </thead>
         <tbody>
@@ -46,6 +47,12 @@
                         NULL
                         {% endif %}
                      </td>
+                     <td>
+                        <form action="/delete" method="post">
+                            <input type="hidden" name="id" value="{{ task['id'] }}">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
