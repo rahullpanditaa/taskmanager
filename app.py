@@ -44,3 +44,22 @@ def create_task():
                title, description, due_date, "to-do", blocked_by if blocked_by else None)
     
     return redirect("/")
+
+@app.route("/delete", methods=["POST"])
+def delete():
+    # User can only reach this route via POST - form submission
+
+    # Validate id
+    id = request.form.get("id")
+    try:
+        id = int(id)
+    except ValueError:
+        return redirect("/")
+    
+    # Update tasks which are blocked by given task id - blocked by NULL
+    db.execute('UPDATE "tasks" SET "blocked_by"=? WHERE "blocked_by"=?;', None, id)
+
+    # Delete given task from db
+    db.execute('DELETE FROM "tasks" WHERE "id"=?;', id)
+
+    return redirect("/")
