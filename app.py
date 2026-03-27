@@ -29,7 +29,7 @@ def index():
 def create_task():
     # Can only reach this route via POST
 
-    # Parse form data as json
+    # Parse data as json
     if request.is_json:
         # Get json data -> dict
         data: dict = request.get_json()
@@ -91,7 +91,7 @@ def delete_task():
         
         # If no rows were deleted
         if rows == 0:
-            return jsonify({"error": "Invalid task id - no matching task found"}), 400
+            return jsonify({"error": "Task not found"}), 404
         
         # return response
         return jsonify({"message": "Task deleted"}), 200
@@ -103,29 +103,55 @@ def delete_task():
 def update_task():
     # User can only reach this route via POST
 
-    # Validate form submitted
-    id = request.form.get("id")
-    title = request.form.get("title")
-    description = request.form.get("description")
-    due_date = request.form.get("due_date")
+    if request.is_json:
+        data: dict = request.get_json()
 
-    # Minimal validation, since html forms will be replaced by Flutter
-    if not id or not title or not description or not due_date:
-        return redirect("/")
-    
-    status = request.form.get("status")
-    if not status or status not in ["to-do", "in progress", "done"]:
-        return redirect("/")
-    
-    #TODO: Validate blocked by id later
-    blocked_by = request.form.get("blocked_by")
+        # Validate id
+        id = data.get("id")
+        try:
+            id = int(id)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid task id"}), 400
+        
+        # Validate other fields
+        title = data.get("title")
+        description = data.get("description")
+        due_date = data.get("due_date")
 
-    # Update db
-    db.execute('UPDATE "tasks" SET "title"=?, "description"=?, "due_date"=?, "status"=?, "blocked_by"=? WHERE "id"=?;',
-               title, description, due_date, status, int(blocked_by) if blocked_by else None, id)
-    
-    return redirect("/")
+        if not title or not description or not due_date:
+            return jsonify({"error": "Missing fields"}), 400
+        
+        # Validate status
+        status = data.get("status")
+        if status not in ["to-do", "in progress", "done"]:
+            return jsonify({"error": "Invalid status"}), 400
+        
+        # Validate blocked by
+        blocked_by = data.get("blocked_by")
+        if blocked_by:
+            try:
+                blocked_by = int(blocked_by)
+            except (ValueError, TypeError):
+                return jsonify({"error": "Invalid blocked_by"}), 400
+        else:
+            blocked_by = None
+        
+        # Update db
+        rows = db.execute('UPDATE "tasks" SET "title"=?, "description"=?, "due_date"=?, "status"=?, "blocked_by"=? WHERE "id"=?;',
+                            title, description, due_date, status, blocked_by, id)
 
-
-
-    
+        # If no rows were updated
+        if rows == 0:
+            return jsonify({"error": "Task not found"}), 404
+        
+        # return updated task json
+        return jsonify({
+            "id": id,
+            "title": title,
+            "description": description,
+            "due_date": due_date,
+            "status": status,
+            "blocked_by": blocked_by
+        }), 200
+    else:
+        return jsonify({"error": "Content-Type must be application/json"}), 415
