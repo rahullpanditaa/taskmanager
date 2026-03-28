@@ -104,6 +104,70 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
+  // add update dialog - on tap, ability to update task
+  void showUpdateDialog(Map task) {
+    final titleController = TextEditingController(text: task['title']);
+    final descriptionController = TextEditingController(text: task['description']);
+    final dueDateController = TextEditingController(text: task['due_date']);
+    String status = task['status'];
+
+    // display dialog above app
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Update Task'),
+          content: SingleChildScrollView(
+            child: Column(children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(labelText: "Title"),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: 'Description'),
+              ),
+              TextField(
+                controller: dueDateController,
+                decoration: InputDecoration(labelText: 'Due Date'),
+              ),
+              DropdownButton<String>(
+                value: status,
+                items: [
+                  DropdownMenuItem(value: 'to-do', child: Text('To-Do')),
+                  DropdownMenuItem(value: 'in-progress', child: Text("In progress")),
+                  DropdownMenuItem(value: 'done', child: Text('Done')),
+                ],
+                onChanged: (value) {
+                  status = value!;
+                },
+              )
+            ],)
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await UpdateTask(
+                  task['id'],
+                  titleController.text,
+                  descriptionController.text,
+                  dueDateController.text,
+                  status
+                );
+                Navigator.pop(context);
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,6 +237,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             return ListTile(
                               title: Text(task['title']),
                               subtitle: Text(task['description']),
+                              onTap: () => showUpdateDialog(task), // make a task 'tappable'
                               trailing: IconButton(
                                 icon: Icon(Icons.delete),
                                 onPressed: () => deleteTask(task['id']),
