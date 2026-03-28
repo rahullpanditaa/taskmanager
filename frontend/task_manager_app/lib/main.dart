@@ -94,6 +94,20 @@ class _TasksScreenState extends State<TasksScreen> {
 
   // POST /create - create a new task
   Future<void> createTask() async {
+
+    // prevent double tap
+    if (isCreating) return;
+
+    setState(() {
+      isCreating = true;
+    });
+
+    // ui updates first
+    await Future.delayed(Duration.zero);
+
+    // 2 second delay
+    await Future.delayed(const Duration(seconds: 2));
+
     final response = await http.post(
       Uri.parse('http://localhost:5000/create'),
       headers: {"Content-Type": "application/json"},
