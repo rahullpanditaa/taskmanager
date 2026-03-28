@@ -323,93 +323,122 @@ class _TasksScreenState extends State<TasksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Tasks'),
+        title: const Text('Task Manager'),
+        centerTitle: true,
       ),
-      body: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      TextField(
-                        decoration: const InputDecoration(
-                          labelText: 'Search by title',
-                        ),
-                        onChanged: (value) {
-                          searchQuery = value;
-                          applyFilters();
-                        },
-                      ),
-                      DropdownButton<String>(
-                        value: selectedStatus,
-                        items: const [
-                          DropdownMenuItem(value: 'all', child: Text('All')),
-                          DropdownMenuItem(value: 'to-do', child: Text('To-Do')),
-                          DropdownMenuItem(value: 'in progress', child: Text('In progress')),
-                          DropdownMenuItem(value: 'done', child: Text('Done')),
-                        ],
-                        onChanged: (value) {
-                          selectedStatus = value!;
-                          applyFilters();
-                        },
-                      ),
-                      TextField(
-                        controller: titleController,
-                        decoration: InputDecoration(labelText: 'Title'),
-                        onChanged: (_) => saveDraft(),
-                      ),
-                      TextField(
-                        controller: descriptionController,
-                        decoration: InputDecoration(labelText: 'Description'),
-                        onChanged: (_) => saveDraft(),
-                      ),
-                      TextField(
-                        controller: dueDateController,
-                        readOnly: true,
-                        decoration: const InputDecoration(labelText: 'Due Date'),
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2100),
-                          );
-
-                          if (date != null) {
-                            final time = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.now(),
-                            );
-
-                            if (time != null) {
-                              final dateTime = DateTime(
-                                date.year,
-                                date.month,
-                                date.day,
-                                time.hour,
-                                time.minute,
-                              );
-
-                              dueDateController.text = dateTime.toString();
-                              saveDraft();
-                            }
-                          }
-                        },
-                        onChanged: (_) => saveDraft(),
-                      ),
-                      // Update create button UI
-                      ElevatedButton(
-                        onPressed: isCreating ? null : createTask,
-                        child: isCreating
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                              : const Text('Add Task'),
-                      ),
-                    ],
+      body: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  // Search and filter
+                  const Text(
+                    'Search & Filter',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+                  const SizedBox(height: 8),
+
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Search by title',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) {
+                      searchQuery = value;
+                      applyFilters();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  DropdownButtonFormField<String>(
+                    // value: selectedStatus,
+                    initialValue: selectedStatus,
+                    decoration: const InputDecoration(
+                      labelText: 'Filter by status',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('All')),
+                      DropdownMenuItem(value: 'to-do', child: Text('To-Do')),
+                      DropdownMenuItem(value: 'in progress', child: Text('In Progress')),
+                      DropdownMenuItem(value: 'done', child: Text('Done')),
+                    ],
+                    onChanged: (value) {
+                      selectedStatus = value!;
+                      applyFilters();
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Add a new task
+                  const Text(
+                    'Add Task',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+                    onChanged: (_) => saveDraft(),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // RESUME FROM HERE
+                  TextField(
+                    controller: descriptionController,
+                    decoration: InputDecoration(labelText: 'Description'),
+                    onChanged: (_) => saveDraft(),
+                  ),
+                  TextField(
+                    controller: dueDateController,
+                    readOnly: true,
+                    decoration: const InputDecoration(labelText: 'Due Date'),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                   if (date != null) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                     if (time != null) {
+                          final dateTime = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          );
+                       dueDateController.text = dateTime.toString();
+                          saveDraft();
+                        }
+                      }
+                    },
+                    onChanged: (_) => saveDraft(),
+                  ),
+                  // Update create button UI
+                  ElevatedButton(
+                    onPressed: isCreating ? null : createTask,
+                    child: isCreating
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text('Add Task'),
+                  ),
+                ],
+              ),
                 ),
                 Expanded(
                   child: isLoading
@@ -432,6 +461,7 @@ class _TasksScreenState extends State<TasksScreen> {
                 ),
               ],
             ),
+      )
  
     );
   }
