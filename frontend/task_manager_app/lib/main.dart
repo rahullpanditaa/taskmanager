@@ -27,8 +27,15 @@ class TasksScreen extends StatefulWidget {
 
 // Internal state management, logic for the Tasks Screen widget
 class _TasksScreenState extends State<TasksScreen> {
-  List tasks = [];
+  // List tasks = [];
   bool isLoading = true;
+
+  // Add state variables for searching and filtering
+  List allTasks = [];
+  List filteredTasks = [];
+
+  String searchQuery = '';
+  String selectedStatus = 'all';
 
   // Input controllers for title, description, due date
   final TextEditingController titleController = TextEditingController();
@@ -43,18 +50,42 @@ class _TasksScreenState extends State<TasksScreen> {
 
   // GET /tasks
   Future<void> fetchTasks() async {
-    final response = await http.get(Uri.parse('http://localhost:5000/tasks'));
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:5000/tasks'),
+      );
 
-    if (response.statusCode == 200) {
-      setState(() {
-        tasks = jsonDecode(response.body);
-        isLoading = false;
-      });
-    } else {
+      if (response.statusCode == 200) {
+        setState(() {
+          allTasks = jsonDecode(response.body);
+          applyFilters();
+          isLoading = false;   // ✅ IMPORTANT
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print(e);
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  // Filter function
+  void applyFilters() {
+    setState(() {
+      filteredTasks = allTasks.where((task) {
+        // being very safe - cast to string
+        final matchesSearch = (task['title'] ?? '').toString().toLowerCase().contains(searchQuery.toLowerCase());
+
+        final matchesStatus = selectedStatus == 'all' || task['status'] == selectedStatus;
+
+        return matchesSearch && matchesStatus;
+      }).toList();
+    });
   }
 
   // POST /create - create a new task
@@ -106,67 +137,77 @@ class _TasksScreenState extends State<TasksScreen> {
 
   // add update dialog - on tap, ability to update task
   void showUpdateDialog(Map task) {
-    final titleController = TextEditingController(text: task['title']);
-    final descriptionController = TextEditingController(text: task['description']);
-    final dueDateController = TextEditingController(text: task['due_date']);
-    String status = task['status'];
+  final titleController = TextEditingController(text: task['title']);
+  final descriptionController = TextEditingController(text: task['description']);
+  final dueDateController = TextEditingController(text: task['due_date']);
+  String status = task['status'];
 
-    // display dialog above app
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Update Task'),
-          content: SingleChildScrollView(
-            child: Column(children: [
+  // add update dialog above app
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+        title: const Text('Update Task'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
               TextField(
                 controller: titleController,
-                decoration: InputDecoration(labelText: "Title"),
+                decoration: const InputDecoration(labelText: 'Title'),
               ),
               TextField(
                 controller: descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(labelText: 'Description'),
               ),
               TextField(
                 controller: dueDateController,
-                decoration: InputDecoration(labelText: 'Due Date'),
+                decoration: const InputDecoration(labelText: 'Due Date'),
               ),
               DropdownButton<String>(
                 value: status,
-                items: [
-                  DropdownMenuItem(value: 'to-do', child: Text('To-Do')),
-                  DropdownMenuItem(value: 'in-progress', child: Text("In progress")),
-                  DropdownMenuItem(value: 'done', child: Text('Done')),
+                items: const [
+                  DropdownMenuItem(value: "to-do", child: Text("To-Do")),
+                  DropdownMenuItem(value: "in progress", child: Text("In Progress")),
+                  DropdownMenuItem(value: "done", child: Text("Done")),
                 ],
                 onChanged: (value) {
-                  status = value!;
+                  setState(() {
+                    status = value!;
+                  });
+                  // status = value!;
                 },
-              )
-            ],)
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await updateTask(
-                  task['id'],
-                  titleController.text,
-                  descriptionController.text,
-                  dueDateController.text,
-                  status
-                );
-                Navigator.pop(context);
-              },
-              child: Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await updateTask(
+                task['id'],
+                titleController.text,
+                descriptionController.text,
+                dueDateController.text,
+                status,
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      );
+        },
+      );
+      
+    },
+  );
+}
 
   // POST /update 
   Future<void> updateTask(
@@ -176,24 +217,23 @@ class _TasksScreenState extends State<TasksScreen> {
     String dueDate,
     String status,
   ) async {
-    final response = await http.post(
-      Uri.parse('http://localhost:5000/update'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "id": id,
-        "title": title,
-        "description": description,
-        "due_date": dueDate,
-        "status": status,
-        "blocked_by": null,
-      }),
-    );
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/update'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "id": id,
+          "title": title,
+          "description": description,
+          "due_date": dueDate,
+          "status": status,
+          "blocked_by": null,
+        }),
+      );
 
-    // if success
     if (response.statusCode == 200) {
-      fetchTasks();
+      fetchTasks(); // refresh list
     } else {
-      print('Failed to update task: ${response.body}');
+      print("Failed to update task: ${response.body}");
     }
   }
 
@@ -209,6 +249,28 @@ class _TasksScreenState extends State<TasksScreen> {
                   padding: EdgeInsets.all(8.0),
                   child: Column(
                     children: [
+                      TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Search by title',
+                        ),
+                        onChanged: (value) {
+                          searchQuery = value;
+                          applyFilters();
+                        },
+                      ),
+                      DropdownButton<String>(
+                        value: selectedStatus,
+                        items: const [
+                          DropdownMenuItem(value: 'all', child: Text('All')),
+                          DropdownMenuItem(value: 'to-do', child: Text('To-Do')),
+                          DropdownMenuItem(value: 'in progress', child: Text('In progress')),
+                          DropdownMenuItem(value: 'done', child: Text('Done')),
+                        ],
+                        onChanged: (value) {
+                          selectedStatus = value!;
+                          applyFilters();
+                        },
+                      ),
                       TextField(
                         controller: titleController,
                         decoration: InputDecoration(labelText: 'Title'),
@@ -260,9 +322,9 @@ class _TasksScreenState extends State<TasksScreen> {
                   child: isLoading
                       ? Center(child: CircularProgressIndicator())
                       : ListView.builder(
-                          itemCount: tasks.length,
+                          itemCount: filteredTasks.length,
                           itemBuilder: (context, index) {
-                            final task = tasks[index];
+                            final task = filteredTasks[index];
                             return ListTile(
                               title: Text(task['title']),
                               subtitle: Text(task['description']),
