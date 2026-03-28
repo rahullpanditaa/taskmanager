@@ -37,6 +37,10 @@ class _TasksScreenState extends State<TasksScreen> {
   String searchQuery = '';
   String selectedStatus = 'all';
 
+  // Loading state variables
+  bool isCreating = false;
+  bool isUpdating = false;
+
   // Input controllers for title, description, due date
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -110,11 +114,16 @@ class _TasksScreenState extends State<TasksScreen> {
       dueDateController.clear();
 
       // refresh list of tasks rendered
-      fetchTasks();
+      await fetchTasks();
     } else {
       // Temporary
       print('Failed to create task: ${response.body}');
     }
+
+    // modify to implement loading state
+    setState(() {
+      isCreating = false;
+    });
   }
 
   // POST /delete
@@ -311,9 +320,16 @@ class _TasksScreenState extends State<TasksScreen> {
                           }
                         },
                       ),
+                      // Update create button UI
                       ElevatedButton(
-                        onPressed: createTask,
-                        child: const Text('Add Task'),
+                        onPressed: isCreating ? null : createTask,
+                        child: isCreating
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                              : const Text('Add Task'),
                       ),
                     ],
                   ),
