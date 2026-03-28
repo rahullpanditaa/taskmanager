@@ -117,13 +117,13 @@ class _TasksScreenState extends State<TasksScreen> {
                             firstDate: DateTime(2020),
                             lastDate: DateTime(2100),
                           );
-                      
+
                           if (date != null) {
                             final time = await showTimePicker(
                               context: context,
                               initialTime: TimeOfDay.now(),
                             );
-                      
+
                             if (time != null) {
                               final dateTime = DateTime(
                                 date.year,
@@ -132,7 +132,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                 time.hour,
                                 time.minute,
                               );
-                      
+
                               dueDateController.text = dateTime.toString();
                             }
                           }
@@ -155,6 +155,10 @@ class _TasksScreenState extends State<TasksScreen> {
                             return ListTile(
                               title: Text(task['title']),
                               subtitle: Text(task['description']),
+                              trailing: IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: () => deleteTask(task['id']),
+                              ),
                             );
                           },
                         ),
