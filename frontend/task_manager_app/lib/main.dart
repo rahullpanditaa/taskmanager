@@ -25,9 +25,15 @@ class TasksScreen extends StatefulWidget {
   State<TasksScreen> createState() => _TasksScreenState();
 }
 
+// Internal state management, logic for the Tasks Screen widget
 class _TasksScreenState extends State<TasksScreen> {
   List tasks = [];
   bool isLoading = true;
+
+  // Input controllers for title, description, due date
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController dueDateController = TextEditingController();
 
   @override
   void initState() {
@@ -35,6 +41,7 @@ class _TasksScreenState extends State<TasksScreen> {
     fetchTasks();
   }
 
+  // GET /tasks
   Future<void> fetchTasks() async {
     final response = await http.get(Uri.parse('http://localhost:5000/tasks'));
 
@@ -50,6 +57,35 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
+  // POST /create - create a new task
+  Future<void> createTask() async {
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/create'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "title": titleController.text,
+        "description": descriptionController.text,
+        "due_date": dueDateController.text,
+        "status": "to-do",
+        "blocked_by": null,
+      })
+    );
+
+    // If resource is created
+    if (response.statusCode == 201) {
+      // clear the input fields
+      titleController.clear();
+      descriptionController.clear();
+      dueDateController.clear();
+
+      // refresh list of tasks rendered
+      fetchTasks();
+    } else {
+      // Temporary
+      print('Failed to create task: ${response.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,7 +94,8 @@ class _TasksScreenState extends State<TasksScreen> {
       ),
       body: isLoading ? Center(
         child: CircularProgressIndicator()
-      ) : ListView.builder(
+      ) 
+      : ListView.builder(
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           final task = tasks[index];
