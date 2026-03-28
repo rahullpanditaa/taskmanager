@@ -226,24 +226,40 @@ class _TasksScreenState extends State<TasksScreen> {
     String dueDate,
     String status,
   ) async {
-      final response = await http.post(
-        Uri.parse('http://localhost:5000/update'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "id": id,
-          "title": title,
-          "description": description,
-          "due_date": dueDate,
-          "status": status,
-          "blocked_by": null,
-        }),
-      );
+
+    // Update
+    if (isUpdating) return;
+
+    // Change state
+    setState(() {
+      isUpdating = true;
+    });
+
+    // Add 2 seconds delay
+    await Future.delayed(const Duration(seconds: 2));
+    
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/update'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "id": id,
+        "title": title,
+        "description": description,
+        "due_date": dueDate,
+        "status": status,
+        "blocked_by": null,
+      }),
+    );
 
     if (response.statusCode == 200) {
-      fetchTasks(); // refresh list
+      await fetchTasks(); // refresh list
     } else {
       print("Failed to update task: ${response.body}");
     }
+
+    setState(() {
+      isUpdating = false;
+    });
   }
 
   @override
