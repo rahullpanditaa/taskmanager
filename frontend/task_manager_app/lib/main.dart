@@ -151,7 +151,7 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                await UpdateTask(
+                await updateTask(
                   task['id'],
                   titleController.text,
                   descriptionController.text,
@@ -166,6 +166,35 @@ class _TasksScreenState extends State<TasksScreen> {
         );
       },
     );
+  }
+
+  // POST /update 
+  Future<void> updateTask(
+    int id,
+    String title,
+    String description,
+    String dueDate,
+    String status,
+  ) async {
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/update'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "id": id,
+        "title": title,
+        "description": description,
+        "due_date": dueDate,
+        "status": status,
+        "blocked_by": null,
+      }),
+    );
+
+    // if success
+    if (response.statusCode == 200) {
+      fetchTasks();
+    } else {
+      print('Failed to update task: ${response.body}');
+    }
   }
 
   @override
