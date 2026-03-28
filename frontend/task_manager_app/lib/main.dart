@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MainApp());
@@ -50,6 +51,7 @@ class _TasksScreenState extends State<TasksScreen> {
   void initState() {
     super.initState();
     fetchTasks();
+    loadDraft();
   }
 
   // GET /tasks
@@ -127,8 +129,13 @@ class _TasksScreenState extends State<TasksScreen> {
       descriptionController.clear();
       dueDateController.clear();
 
+      
+      // clear drafts
+      await clearDraft();
+      
       // refresh list of tasks rendered
       await fetchTasks();
+
     } else {
       // Temporary
       print('Failed to create task: ${response.body}');
@@ -285,6 +292,33 @@ class _TasksScreenState extends State<TasksScreen> {
     });
   }
 
+  // Save drafts on change
+  void saveDraft() async {
+    final preferences = await SharedPreferences.getInstance();
+
+    preferences.setString('title', titleController.text);
+    preferences.setString('description', descriptionController.text);
+    preferences.setString('due_date', dueDateController.text);
+  }
+
+  // Load drafts
+  Future<void> loadDraft() async {
+    final preferences = await SharedPreferences.getInstance();
+
+    titleController.text = preferences.getString('title') ?? '';
+    descriptionController.text = preferences.getString('description') ?? '';
+    dueDateController.text = preferences.getString('due_date') ?? '';
+  }
+
+  // Clear all drafts
+  Future<void> clearDraft() async {
+    final preferences = await SharedPreferences.getInstance();
+
+    await preferences.remove('title');
+    await preferences.remove('description');
+    await preferences.remove('due_date');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -322,10 +356,12 @@ class _TasksScreenState extends State<TasksScreen> {
                       TextField(
                         controller: titleController,
                         decoration: InputDecoration(labelText: 'Title'),
+                        onChanged: (_) => saveDraft(),
                       ),
                       TextField(
                         controller: descriptionController,
                         decoration: InputDecoration(labelText: 'Description'),
+                        onChanged: (_) => saveDraft(),
                       ),
                       TextField(
                         controller: dueDateController,
@@ -355,9 +391,11 @@ class _TasksScreenState extends State<TasksScreen> {
                               );
 
                               dueDateController.text = dateTime.toString();
+                              saveDraft();
                             }
                           }
                         },
+                        onChanged: (_) => saveDraft(),
                       ),
                       // Update create button UI
                       ElevatedButton(
