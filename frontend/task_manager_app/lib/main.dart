@@ -86,6 +86,24 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
+  // POST /delete
+  Future<void> deleteTask(int id) async {
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/delete'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"id": id}),
+    );
+
+    // Success
+    if (response.statusCode == 200) {
+      // refresh tasks list
+      fetchTasks();
+    } else {
+      // Temporary print
+      print('Failed to delete task: ${response.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
