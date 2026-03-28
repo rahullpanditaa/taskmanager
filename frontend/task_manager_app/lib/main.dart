@@ -196,18 +196,27 @@ class _TasksScreenState extends State<TasksScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
+          // Update dialog save button
           ElevatedButton(
-            onPressed: () async {
-              await updateTask(
-                task['id'],
-                titleController.text,
-                descriptionController.text,
-                dueDateController.text,
-                status,
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
+            onPressed: isUpdating
+                      ? null
+                      : () async {
+                        await updateTask(
+                          task['id'],
+                          titleController.text,
+                          descriptionController.text,
+                          dueDateController.text,
+                          status
+                        );
+                        Navigator.pop(context);
+                      },
+            child: isUpdating
+                  ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('Save'),
           ),
         ],
       );
