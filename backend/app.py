@@ -1,8 +1,10 @@
 from cs50 import SQL
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # Configure Flask app
 app = Flask(__name__)
+CORS(app)
 
 # Connect to sqlite db
 db = SQL("sqlite:///task_manager.db")
