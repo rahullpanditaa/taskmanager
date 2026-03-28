@@ -92,20 +92,75 @@ class _TasksScreenState extends State<TasksScreen> {
       appBar: AppBar(
         title: Text('Tasks'),
       ),
-      body: isLoading ? Center(
-        child: CircularProgressIndicator()
-      ) 
-      : ListView.builder(
-        itemCount: tasks.length,
-        itemBuilder: (context, index) {
-          final task = tasks[index];
-
-          return ListTile(
-            title: Text(task['title']),
-            subtitle: Text(task['description']),
-          );
-        },
-      )
+      body: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: titleController,
+                        decoration: InputDecoration(labelText: 'Title'),
+                      ),
+                      TextField(
+                        controller: descriptionController,
+                        decoration: InputDecoration(labelText: 'Description'),
+                      ),
+                      TextField(
+                        controller: dueDateController,
+                        readOnly: true,
+                        decoration: const InputDecoration(labelText: 'Due Date'),
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          );
+                      
+                          if (date != null) {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                      
+                            if (time != null) {
+                              final dateTime = DateTime(
+                                date.year,
+                                date.month,
+                                date.day,
+                                time.hour,
+                                time.minute,
+                              );
+                      
+                              dueDateController.text = dateTime.toString();
+                            }
+                          }
+                        },
+                      ),
+                      ElevatedButton(
+                        onPressed: createTask,
+                        child: const Text('Add Task'),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: isLoading
+                      ? Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          itemCount: tasks.length,
+                          itemBuilder: (context, index) {
+                            final task = tasks[index];
+                            return ListTile(
+                              title: Text(task['title']),
+                              subtitle: Text(task['description']),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
  
     );
   }
