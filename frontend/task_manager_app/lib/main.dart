@@ -47,6 +47,9 @@ class _TasksScreenState extends State<TasksScreen> {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
 
+  // Add state for selected blocked by task
+  int? selectedBlockedBy;
+
   @override
   void initState() {
     super.initState();
@@ -328,14 +331,14 @@ class _TasksScreenState extends State<TasksScreen> {
       ),
       body: Column(
   children: [
-    // 🔹 TOP SECTION (scrollable if needed)
+    // 
     SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 SEARCH & FILTER
+            // Search and filter
             const Text(
               'Search & Filter',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -357,7 +360,8 @@ class _TasksScreenState extends State<TasksScreen> {
             const SizedBox(height: 10),
 
             DropdownButtonFormField<String>(
-              value: selectedStatus,
+              // value: selectedStatus,
+              initialValue: selectedStatus,
               decoration: const InputDecoration(
                 labelText: 'Filter by status',
                 border: OutlineInputBorder(),
@@ -376,7 +380,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
             const SizedBox(height: 16),
 
-            // 🔹 ADD TASK
+            // Add new task
             const Text(
               'Add Task',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -445,6 +449,32 @@ class _TasksScreenState extends State<TasksScreen> {
 
             const SizedBox(height: 12),
 
+            DropdownButtonFormField<int>(
+              initialValue: selectedBlockedBy,
+              decoration: const InputDecoration(
+                labelText: 'Blocked By (optional)',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('None'),
+                ),
+                ...allTasks.map((task) {
+                  return DropdownMenuItem<int>(
+                    value: task['id'],
+                    child: Text(task['title']),
+                  );
+                }).toList(),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  selectedBlockedBy = value;
+                });
+              },
+
+            ),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -465,7 +495,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
     const SizedBox(height: 8),
 
-    // 🔹 TASK LIST (gets most space)
+    // All tasks list
     Expanded(
       child: isLoading
           ? const Center(child: CircularProgressIndicator())
