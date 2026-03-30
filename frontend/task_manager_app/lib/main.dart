@@ -182,7 +182,8 @@ class _TasksScreenState extends State<TasksScreen> {
     final dueDateController = TextEditingController(text: task['due_date']);
     String status = task['status'];
 
-    int? blockedBy = task['blocked_by'];
+    // int? blockedBy = task['blocked_by'];
+    int blockedBy = task['blocked_by'] ?? -1;
 
   // add update dialog above app
   showDialog(
@@ -229,11 +230,11 @@ class _TasksScreenState extends State<TasksScreen> {
                     ),
                     items: [
                       const DropdownMenuItem<int>(
-                        value: null,
+                        value: -1,
                         child: Text('None'),
                       ),
                       ...allTasks
-                      .where((t) => t['td'] != task['td']) // exclude itself
+                      .where((t) => t['id'] != task['id']) // exclude itself
                       .map((t) {
                         return DropdownMenuItem<int>(
                           value: t['id'],
@@ -243,7 +244,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     ],
                     onChanged: (value) {
                       setState(() {
-                        blockedBy = value;
+                        blockedBy = value!;
                       });
                     },
                   )
@@ -294,7 +295,7 @@ class _TasksScreenState extends State<TasksScreen> {
     String description,
     String dueDate,
     String status,
-    int? blockedBy,
+    int blockedBy,
   ) async {
 
     // Update
@@ -305,6 +306,8 @@ class _TasksScreenState extends State<TasksScreen> {
       isUpdating = true;
     });
 
+    await Future.delayed(Duration.zero);
+    
     // Add 2 seconds delay
     await Future.delayed(const Duration(seconds: 2));
     
@@ -317,7 +320,7 @@ class _TasksScreenState extends State<TasksScreen> {
         "description": description,
         "due_date": dueDate,
         "status": status,
-        "blocked_by": blockedBy,
+        "blocked_by": blockedBy == -1 ? null : blockedBy,
       }),
     );
 
