@@ -121,7 +121,7 @@ class _TasksScreenState extends State<TasksScreen> {
         "description": descriptionController.text,
         "due_date": dueDateController.text,
         "status": "to-do",
-        "blocked_by": null,
+        "blocked_by": selectedBlockedBy,
       })
     );
 
@@ -138,6 +138,9 @@ class _TasksScreenState extends State<TasksScreen> {
       
       // refresh list of tasks rendered
       await fetchTasks();
+
+      // reset blocked by
+      selectedBlockedBy = null;
 
     } else {
       // Temporary
@@ -170,10 +173,13 @@ class _TasksScreenState extends State<TasksScreen> {
 
   // add update dialog - on tap, ability to update task
   void showUpdateDialog(Map task) {
-  final titleController = TextEditingController(text: task['title']);
-  final descriptionController = TextEditingController(text: task['description']);
-  final dueDateController = TextEditingController(text: task['due_date']);
-  String status = task['status'];
+
+    final titleController = TextEditingController(text: task['title']);
+    final descriptionController = TextEditingController(text: task['description']);
+    final dueDateController = TextEditingController(text: task['due_date']);
+    String status = task['status'];
+
+    int? blockedBy = task['blocked_by'];
 
   // add update dialog above app
   showDialog(
@@ -182,36 +188,62 @@ class _TasksScreenState extends State<TasksScreen> {
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-        title: const Text('Update Task'),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-              ),
-              TextField(
-                controller: dueDateController,
-                decoration: const InputDecoration(labelText: 'Due Date'),
-              ),
-              DropdownButton<String>(
-                value: status,
-                items: const [
-                  DropdownMenuItem(value: "to-do", child: Text("To-Do")),
-                  DropdownMenuItem(value: "in progress", child: Text("In Progress")),
-                  DropdownMenuItem(value: "done", child: Text("Done")),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    status = value!;
-                  });
-                  // status = value!;
-                },
-              ),
+            title: const Text('Update Task'),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                  ),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                  ),
+                  TextField(
+                    controller: dueDateController,
+                    decoration: const InputDecoration(labelText: 'Due Date'),
+                  ),
+                  DropdownButton<String>(
+                    value: status,
+                    items: const [
+                      DropdownMenuItem(value: "to-do", child: Text("To-Do")),
+                      DropdownMenuItem(value: "in progress", child: Text("In Progress")),
+                      DropdownMenuItem(value: "done", child: Text("Done")),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        status = value!;
+                      });
+                      // status = value!;
+                    },
+                  ),
+                  DropdownButtonFormField<int>(
+                    initialValue: blockedBy,
+                    decoration: const InputDecoration(
+                      labelText: 'Blocked By',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int>(
+                        value: null,
+                        child: Text('None'),
+                      ),
+                      ...allTasks
+                      .where((t) => t['td'] != task['td']) // exclude itself
+                      .map((t) {
+                        return DropdownMenuItem<int>(
+                          value: t['id'],
+                          child: Text(t['title']),
+                        );
+                      }).toList(),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        blockedBy = value;
+                      });
+                    },
+                  )
             ],
           ),
         ),
