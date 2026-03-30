@@ -55,9 +55,19 @@ def create_task():
         else:
             blocked_by = None
 
+        # Validate blocked by
+        if blocked_by is not None:
+            # check whether given blocked by is a valid id (extra, since foreign key constraint present)
+            row = db.execute('SELECT * FROM "tasks" WHERE "id"=?;', blocked_by)
+            if not row:
+                return jsonify({"error": "Invalid blocked_by"}), 400
+            
         # Insert into db
-        id = db.execute('INSERT INTO "tasks" ("title", "description", "due_date", "status", "blocked_by") VALUES (?, ?, ?, ?, ?);',
-               title, description, due_date, "to-do", blocked_by)
+        try:
+            id = db.execute('INSERT INTO "tasks" ("title", "description", "due_date", "status", "blocked_by") VALUES (?, ?, ?, ?, ?);',
+                           title, description, due_date, "to-do", blocked_by)
+        except ValueError:
+            return jsonify({"error": "Invalid input"}), 400
         
         # return response
         return jsonify({
@@ -137,6 +147,16 @@ def update_task():
                 return jsonify({"error": "Invalid blocked_by"}), 400
         else:
             blocked_by = None
+
+        # Check whether blocked by equals id
+        if blocked_by is not None:
+            if blocked_by == id:
+                return jsonify({"error": "Task cannot block itself"}), 400
+            
+            row = db.execute('SELECT * FROM "tasks" WHERE "id"=?;', blocked_by)
+            if not row:
+                return jsonify({"error": "Invalid blocked_by"}), 400
+
         
         # Update db
         rows = db.execute('UPDATE "tasks" SET "title"=?, "description"=?, "due_date"=?, "status"=?, "blocked_by"=? WHERE "id"=?;',

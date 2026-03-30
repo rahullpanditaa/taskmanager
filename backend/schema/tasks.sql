@@ -6,5 +6,5 @@ CREATE TABLE "tasks" (
     "status" TEXT NOT NULL CHECK("status" IN ('to-do', 'in progress', 'done')),
     "blocked_by" INTEGER,
     PRIMARY KEY("id"),
-    FOREIGN KEY("blocked_by") REFERENCES "tasks"("id")
+    FOREIGN KEY("blocked_by") REFERENCES "tasks"("id") ON DELETE SET NULL
 );
