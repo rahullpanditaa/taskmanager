@@ -391,6 +391,49 @@ class _TasksScreenState extends State<TasksScreen> {
     });
   }
 
+  // Helper method to highlight text in search
+  Widget buildHighlightedText(String text, String query) {
+  if (query.isEmpty) {
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.bold),
+    );
+  }
+
+  final lowerText = text.toLowerCase();
+  final lowerQuery = query.toLowerCase();
+
+  final startIndex = lowerText.indexOf(lowerQuery);
+
+  if (startIndex == -1) {
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.bold),
+    );
+  }
+
+  final endIndex = startIndex + query.length;
+
+  return RichText(
+    text: TextSpan(
+      style: const TextStyle(
+        color: Colors.black,
+        fontWeight: FontWeight.bold,
+      ),
+      children: [
+        TextSpan(text: text.substring(0, startIndex)),
+        TextSpan(
+          text: text.substring(startIndex, endIndex),
+          style: const TextStyle(
+            backgroundColor: Colors.yellow,
+          ),
+        ),
+        TextSpan(text: text.substring(endIndex)),
+      ],
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -489,12 +532,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           vertical: 6,
                         ),
                         child: ListTile(
-                          title: Text(
-                            task['title'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          title: buildHighlightedText(task['title'], searchQuery),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
