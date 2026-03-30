@@ -326,179 +326,198 @@ class _TasksScreenState extends State<TasksScreen> {
         title: const Text('Task Manager'),
         centerTitle: true,
       ),
-      body: Padding(
+      body: Column(
+  children: [
+    // 🔹 TOP SECTION (scrollable if needed)
+    SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  // Search and filter
-                  const Text(
-                    'Search & Filter',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Search by title',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                    onChanged: (value) {
-                      searchQuery = value;
-                      applyFilters();
-                    },
-                  ),
-                  const SizedBox(height: 10),
-
-                  DropdownButtonFormField<String>(
-                    // value: selectedStatus,
-                    initialValue: selectedStatus,
-                    decoration: const InputDecoration(
-                      labelText: 'Filter by status',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'all', child: Text('All')),
-                      DropdownMenuItem(value: 'to-do', child: Text('To-Do')),
-                      DropdownMenuItem(value: 'in progress', child: Text('In Progress')),
-                      DropdownMenuItem(value: 'done', child: Text('Done')),
-                    ],
-                    onChanged: (value) {
-                      selectedStatus = value!;
-                      applyFilters();
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Add a new task
-                  const Text(
-                    'Add Task',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
-                    onChanged: (_) => saveDraft(),
-                  ),
-                  const SizedBox(height: 10),
-
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description', 
-                      border: OutlineInputBorder()
-                    ),
-                    onChanged: (_) => saveDraft(),
-                  ),
-                  const SizedBox(height: 10),
-
-                  TextField(
-                    controller: dueDateController,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Due Date',
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.calendar_today),
-                    ),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                      );
-                   if (date != null) {
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.now(),
-                        );
-                     if (time != null) {
-                          final dateTime = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time.hour,
-                            time.minute,
-                          );
-                          dueDateController.text = dateTime.toString();
-                          saveDraft();
-                        }
-                      }
-                    },
-                    onChanged: (_) => saveDraft(),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Update create button UI
-                  ElevatedButton(
-                    onPressed: isCreating ? null : createTask,
-                    child: isCreating
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Text('Add Task'),
-                  ),
-                ],
-              ),
-                ),
-                Expanded(
-                  child: isLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : filteredTasks.isEmpty
-                        ? const Center(child: Text('No tasks found'))
-                        : ListView.builder(
-                          itemCount: filteredTasks.length,
-                          itemBuilder: (context, index) {
-                            final task = filteredTasks[index];
-                            
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              child: ListTile(
-                                title: Text(
-                                task['title'],
-                                style: const TextStyle(fontWeight: FontWeight.bold),),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Text(task['description']),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      task['status'],
-                                      style: TextStyle(
-                                        color: task['status'] == 'done'
-                                              ? Colors.green
-                                              : task['status'] == 'in progress'
-                                                  ? Colors.orange
-                                                  : Colors.grey,
-                                        fontWeight: FontWeight.w500, 
-                                      ),
-                                    )
-                                  ]
-                                ),
-                                onTap: () => showUpdateDialog(task), // make a task 'tappable'
-                                trailing: IconButton(
-                                  icon: Icon(Icons.delete),
-                                  onPressed: () => deleteTask(task['id']),
-                                ),
-                              )
-                            );
-                          },
-                        ),
-                ),
-              ],
+            // 🔹 SEARCH & FILTER
+            const Text(
+              'Search & Filter',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-      )
- 
+            const SizedBox(height: 8),
+
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search by title',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                searchQuery = value;
+                applyFilters();
+              },
+            ),
+
+            const SizedBox(height: 10),
+
+            DropdownButtonFormField<String>(
+              value: selectedStatus,
+              decoration: const InputDecoration(
+                labelText: 'Filter by status',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'all', child: Text('All')),
+                DropdownMenuItem(value: 'to-do', child: Text('To-Do')),
+                DropdownMenuItem(value: 'in progress', child: Text('In Progress')),
+                DropdownMenuItem(value: 'done', child: Text('Done')),
+              ],
+              onChanged: (value) {
+                selectedStatus = value!;
+                applyFilters();
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // 🔹 ADD TASK
+            const Text(
+              'Add Task',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => saveDraft(),
+            ),
+
+            const SizedBox(height: 10),
+
+            TextField(
+              controller: descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => saveDraft(),
+            ),
+
+            const SizedBox(height: 10),
+
+            TextField(
+              controller: dueDateController,
+              readOnly: true,
+              decoration: const InputDecoration(
+                labelText: 'Due Date',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2100),
+                );
+
+                if (date != null) {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+
+                  if (time != null) {
+                    final dateTime = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      time.hour,
+                      time.minute,
+                    );
+
+                    dueDateController.text = dateTime.toString();
+                    saveDraft();
+                  }
+                }
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isCreating ? null : createTask,
+                child: isCreating
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Add Task'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+
+    const SizedBox(height: 8),
+
+    // 🔹 TASK LIST (gets most space)
+    Expanded(
+      child: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : filteredTasks.isEmpty
+              ? const Center(child: Text('No tasks found'))
+              : ListView.builder(
+                  itemCount: filteredTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = filteredTasks[index];
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          task['title'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(task['description']),
+                            const SizedBox(height: 4),
+                            Text(
+                              task['status'],
+                              style: TextStyle(
+                                color: task['status'] == 'done'
+                                    ? Colors.green
+                                    : task['status'] == 'in progress'
+                                        ? Colors.orange
+                                        : Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        onTap: () => showUpdateDialog(task),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => deleteTask(task['id']),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+    ),
+  ],
+),
     );
   }
 }
