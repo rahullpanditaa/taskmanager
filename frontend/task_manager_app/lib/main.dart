@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'add_task.dart';
 
+import 'dart:async';
+Timer? _debounce;
+
 void main() {
   runApp(const MainApp());
 }
@@ -307,7 +310,7 @@ class _TasksScreenState extends State<TasksScreen> {
     });
 
     await Future.delayed(Duration.zero);
-    
+
     // Add 2 seconds delay
     await Future.delayed(const Duration(seconds: 2));
     
@@ -419,7 +422,15 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
               onChanged: (value) {
                 searchQuery = value;
-                applyFilters();
+
+                if (_debounce?.isActive ?? false) {
+                  _debounce!.cancel();
+                }
+
+                _debounce = Timer(const Duration(microseconds: 300), () {
+                  applyFilters();
+                });
+                // applyFilters();
               },
             ),
 
