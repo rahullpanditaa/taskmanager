@@ -389,16 +389,24 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  // RESUME FROM HERE
                   TextField(
                     controller: descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
+                    decoration: const InputDecoration(
+                      labelText: 'Description', 
+                      border: OutlineInputBorder()
+                    ),
                     onChanged: (_) => saveDraft(),
                   ),
+                  const SizedBox(height: 10),
+
                   TextField(
                     controller: dueDateController,
                     readOnly: true,
-                    decoration: const InputDecoration(labelText: 'Due Date'),
+                    decoration: const InputDecoration(
+                      labelText: 'Due Date',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
                     onTap: () async {
                       final date = await showDatePicker(
                         context: context,
@@ -419,13 +427,15 @@ class _TasksScreenState extends State<TasksScreen> {
                             time.hour,
                             time.minute,
                           );
-                       dueDateController.text = dateTime.toString();
+                          dueDateController.text = dateTime.toString();
                           saveDraft();
                         }
                       }
                     },
                     onChanged: (_) => saveDraft(),
                   ),
+                  const SizedBox(height: 12),
+
                   // Update create button UI
                   ElevatedButton(
                     onPressed: isCreating ? null : createTask,
@@ -443,18 +453,44 @@ class _TasksScreenState extends State<TasksScreen> {
                 Expanded(
                   child: isLoading
                       ? Center(child: CircularProgressIndicator())
-                      : ListView.builder(
+                      : filteredTasks.isEmpty
+                        ? const Center(child: Text('No tasks found'))
+                        : ListView.builder(
                           itemCount: filteredTasks.length,
                           itemBuilder: (context, index) {
                             final task = filteredTasks[index];
-                            return ListTile(
-                              title: Text(task['title']),
-                              subtitle: Text(task['description']),
-                              onTap: () => showUpdateDialog(task), // make a task 'tappable'
-                              trailing: IconButton(
-                                icon: Icon(Icons.delete),
-                                onPressed: () => deleteTask(task['id']),
-                              ),
+                            
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              child: ListTile(
+                                title: Text(
+                                task['title'],
+                                style: const TextStyle(fontWeight: FontWeight.bold),),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 4),
+                                    Text(task['description']),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      task['status'],
+                                      style: TextStyle(
+                                        color: task['status'] == 'done'
+                                              ? Colors.green
+                                              : task['status'] == 'in progress'
+                                                  ? Colors.orange
+                                                  : Colors.grey,
+                                        fontWeight: FontWeight.w500, 
+                                      ),
+                                    )
+                                  ]
+                                ),
+                                onTap: () => showUpdateDialog(task), // make a task 'tappable'
+                                trailing: IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () => deleteTask(task['id']),
+                                ),
+                              )
                             );
                           },
                         ),
