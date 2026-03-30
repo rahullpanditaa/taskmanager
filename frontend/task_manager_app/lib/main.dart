@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'add_task.dart';
+
 void main() {
   runApp(const MainApp());
 }
@@ -28,6 +30,7 @@ class TasksScreen extends StatefulWidget {
 
 // Internal state management, logic for the Tasks Screen widget
 class _TasksScreenState extends State<TasksScreen> {
+
   // List tasks = [];
   bool isLoading = true;
 
@@ -262,7 +265,8 @@ class _TasksScreenState extends State<TasksScreen> {
                           titleController.text,
                           descriptionController.text,
                           dueDateController.text,
-                          status
+                          status,
+                          blockedBy
                         );
                         Navigator.pop(context);
                       },
@@ -290,6 +294,7 @@ class _TasksScreenState extends State<TasksScreen> {
     String description,
     String dueDate,
     String status,
+    int? blockedBy,
   ) async {
 
     // Update
@@ -312,7 +317,7 @@ class _TasksScreenState extends State<TasksScreen> {
         "description": description,
         "due_date": dueDate,
         "status": status,
-        "blocked_by": null,
+        "blocked_by": blockedBy,
       }),
     );
 
@@ -354,6 +359,32 @@ class _TasksScreenState extends State<TasksScreen> {
     await preferences.remove('due_date');
   }
 
+  // helper method for separate task creation screen
+  Future<void> createTaskFromData(Map data) async {
+    if (isCreating) return;
+
+    setState(() {
+      isCreating = true;
+    });
+
+    await Future.delayed(Duration.zero);
+    await Future.delayed(const Duration(seconds: 2));
+
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/create'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 201) {
+      await fetchTasks();
+    }
+
+    setState(() {
+      isCreating = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -362,7 +393,7 @@ class _TasksScreenState extends State<TasksScreen> {
         centerTitle: true,
       ),
       body: Column(
-  children: [
+              children: [
     // 
     SingleChildScrollView(
       child: Padding(
@@ -411,121 +442,10 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
 
             const SizedBox(height: 16),
-
-            // Add new task
-            const Text(
-              'Add Task',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => saveDraft(),
-            ),
-
-            const SizedBox(height: 10),
-
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => saveDraft(),
-            ),
-
-            const SizedBox(height: 10),
-
-            TextField(
-              controller: dueDateController,
-              readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Due Date',
-                border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.calendar_today),
-              ),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2100),
-                );
-
-                if (date != null) {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                  );
-
-                  if (time != null) {
-                    final dateTime = DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                      time.hour,
-                      time.minute,
-                    );
-
-                    dueDateController.text = dateTime.toString();
-                    saveDraft();
-                  }
-                }
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            DropdownButtonFormField<int>(
-              initialValue: selectedBlockedBy,
-              decoration: const InputDecoration(
-                labelText: 'Blocked By (optional)',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('None'),
-                ),
-                ...allTasks.map((task) {
-                  return DropdownMenuItem<int>(
-                    value: task['id'],
-                    child: Text(task['title']),
-                  );
-                }).toList(),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  selectedBlockedBy = value;
-                });
-              },
-
-            ),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isCreating ? null : createTask,
-                child: isCreating
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Add Task'),
-              ),
-            ),
           ],
         ),
       ),
     ),
-
-    const SizedBox(height: 8),
 
     // All tasks list
     Expanded(
@@ -538,48 +458,75 @@ class _TasksScreenState extends State<TasksScreen> {
                   itemBuilder: (context, index) {
                     final task = filteredTasks[index];
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          task['title'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                    // compute isBlocked
+                    final blockingTask = allTasks.firstWhere(
+                      (t) => t['id'] == task['blocked_by'],
+                      orElse: () => {},
+                    );
+
+                    final isBlocked = task['blocked_by'] != null && (blockingTask.isEmpty || blockingTask['status'] != 'done');
+
+                    return Opacity(
+                      opacity: isBlocked ? 0.6 : 1.0,
+                      child: Card(
+                        color: isBlocked ? Colors.grey[300] : null,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            task['title'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(task['description']),
+                              const SizedBox(height: 4),
+                              Text(
+                                task['status'],
+                                style: TextStyle(
+                                  color: task['status'] == 'done'
+                                      ? Colors.green
+                                      : task['status'] == 'in progress'
+                                          ? Colors.orange
+                                          : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          onTap: () => showUpdateDialog(task),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => deleteTask(task['id']),
                           ),
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(task['description']),
-                            const SizedBox(height: 4),
-                            Text(
-                              task['status'],
-                              style: TextStyle(
-                                color: task['status'] == 'done'
-                                    ? Colors.green
-                                    : task['status'] == 'in progress'
-                                        ? Colors.orange
-                                        : Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        onTap: () => showUpdateDialog(task),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => deleteTask(task['id']),
-                        ),
-                      ),
-                    );
+                      )
+                      );
                   },
                 ),
     ),
   ],
 ),
+  floatingActionButton: FloatingActionButton(
+    onPressed: () async {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AddTaskScreen(allTasks: allTasks),),
+      );
+
+      if (result != null) {
+        await createTaskFromData(result);
+      }
+
+    // fetchTasks();
+    },
+    child: const Icon(Icons.add),
+  ),
     );
   }
 }
