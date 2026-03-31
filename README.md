@@ -142,56 +142,15 @@ All endpoints accept and return JSON.
 
 ---
 
-### Backend (Python + Flask)
-
-* All backend logic, including:
-
-  * Database schema
-  * CRUD endpoints
-  * Validation logic
-  * Foreign key handling
-
-➡️ **Was written entirely by me without AI-generated code**.
-
----
-
 ### Frontend (Flutter + Dart)
 
-Since I had **no prior experience with Flutter or Dart**, I used AI as a learning and implementation aid.
+I used AI as a learning and implementation aid.
 
 AI helped with:
 
 * Understanding Flutter widget structure
 * Implementing UI components (forms, dialogs, lists)
 * Managing state (`setState`, async handling)
-* Implementing debounced search
-* Highlighting matching text in UI
-
----
-
-### Example Helpful Prompts
-
-* "How do I implement a debounced search in Flutter?"
-* "How to highlight matching substring in Flutter Text widget?"
-* "How to structure a Flutter app with API calls to Flask backend?"
-
----
-
-### Example of Incorrect AI Output
-
-At one point, AI suggested using:
-
-```
-toLowercase()
-```
-
-This caused a bug because the correct Dart method is:
-
-```
-toLowerCase()
-```
-
-I identified and fixed this issue by checking Dart documentation and debugging the code.
 
 ---
 
@@ -203,7 +162,6 @@ I identified and fixed this issue by checking Dart documentation and debugging t
   * UI dropdown selection in Flutter
   * Visual distinction for blocked tasks
 
-* All generated/build files are excluded via `.gitignore`
 
 ---
 
@@ -218,7 +176,3 @@ This project demonstrates:
 * Clean separation of concerns
 
 ---
-
-## 📎 Author
-
-Rahul Pandita
