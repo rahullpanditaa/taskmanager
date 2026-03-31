@@ -89,9 +89,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
               const SizedBox(height: 10),
 
-              // 🔹 Blocked By dropdown
+              // blocked by dropdown
               DropdownButtonFormField<int>(
-                value: selectedBlockedBy,
+                initialValue: selectedBlockedBy,
                 decoration: const InputDecoration(
                   labelText: 'Blocked By (optional)',
                   border: OutlineInputBorder(),
