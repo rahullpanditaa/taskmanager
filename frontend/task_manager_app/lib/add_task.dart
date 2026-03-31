@@ -22,7 +22,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Add Task')),
-      body: Padding(
+      body: SafeArea (child: Padding(
         padding: const EdgeInsets.all(12),
         child: SingleChildScrollView(
           child: Column(
@@ -47,7 +47,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
               const SizedBox(height: 10),
 
-              // 🔹 Due date picker (FULLY IMPLEMENTED)
+              // due date picker
               TextField(
                 controller: dueDateController,
                 readOnly: true,
@@ -135,7 +135,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }

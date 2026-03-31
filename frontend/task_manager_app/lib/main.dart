@@ -4,9 +4,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'add_task.dart';
+import 'package:intl/intl.dart';
 
 import 'dart:async';
 Timer? _debounce;
+
+
 
 void main() {
   runApp(const MainApp());
@@ -201,6 +204,10 @@ class _TasksScreenState extends State<TasksScreen> {
     if (response.statusCode == 200) {
       // refresh tasks list
       fetchTasks();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task deleted'))
+      );
     } else {
       // Temporary print
       print('Failed to delete task: ${response.body}');
@@ -233,14 +240,17 @@ class _TasksScreenState extends State<TasksScreen> {
                     controller: titleController,
                     decoration: const InputDecoration(labelText: 'Title'),
                   ),
+                  const SizedBox(height: 8,),
                   TextField(
                     controller: descriptionController,
                     decoration: const InputDecoration(labelText: 'Description'),
                   ),
+                  const SizedBox(height: 8,),
                   TextField(
                     controller: dueDateController,
                     decoration: const InputDecoration(labelText: 'Due Date'),
                   ),
+                  const SizedBox(height: 8,),
                   DropdownButton<String>(
                     value: status,
                     items: const [
@@ -255,6 +265,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       // status = value!;
                     },
                   ),
+                  const SizedBox(height: 8,),
                   DropdownButtonFormField<int>(
                     initialValue: blockedBy,
                     decoration: const InputDecoration(
@@ -359,6 +370,10 @@ class _TasksScreenState extends State<TasksScreen> {
 
     if (response.statusCode == 200) {
       await fetchTasks(); // refresh list
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task updated'))
+      );
     } else {
       print("Failed to update task: ${response.body}");
     }
@@ -414,6 +429,10 @@ class _TasksScreenState extends State<TasksScreen> {
 
     if (response.statusCode == 201) {
       await fetchTasks();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task created'))
+      );
     }
 
     setState(() {
@@ -464,12 +483,48 @@ class _TasksScreenState extends State<TasksScreen> {
   );
 }
 
+  // 
+  Widget buildStatusBadge(String status) {
+    Color color;
+    switch(status) {
+      case 'done':
+      color = Colors.green;
+      break;
+
+      case 'in progress':
+      color = Colors.orange;
+      break;
+
+      default:
+      color = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Task Manager'),
+        title: const Text('Task Manager', 
+        style: TextStyle(
+          fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
+        
       ),
       body: Column(
               children: [
@@ -539,11 +594,22 @@ class _TasksScreenState extends State<TasksScreen> {
       child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : filteredTasks.isEmpty
-              ? const Center(child: Text('No tasks found'))
+          ? Center(child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.inbox, size: 60, color: Colors.grey,),
+              SizedBox(height: 10,),
+              Text('No tasks found', style: TextStyle(color: Colors.grey),)
+            ],
+          ),
+          )
+              
               : ListView.builder(
                   itemCount: filteredTasks.length,
                   itemBuilder: (context, index) {
                     final task = filteredTasks[index];
+
+                    final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(DateTime.parse(task['due_date']));
 
                     // compute isBlocked
                     final blockingTask = allTasks.firstWhere(
@@ -553,60 +619,102 @@ class _TasksScreenState extends State<TasksScreen> {
 
                     final isBlocked = task['blocked_by'] != null && (blockingTask.isEmpty || blockingTask['status'] != 'done');
 
-                    return Opacity(
-                      opacity: isBlocked ? 0.6 : 1.0,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isBlocked ? Colors.grey[200] : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),                       
-                        
-                        child: ListTile(
-                          title: buildHighlightedText(task['title'], searchQuery),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text(task['description']),
-                              const SizedBox(height: 4),
-                              Text(
-                                task['status'],
-                                style: TextStyle(
-                                  color: task['status'] == 'done'
-                                      ? Colors.green
-                                      : task['status'] == 'in progress'
-                                          ? Colors.orange
-                                          : Colors.grey,
-                                ),
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    
+                      child: Opacity(
+                        opacity: isBlocked ? 0.6 : 1.0,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isBlocked ? Colors.grey[200] : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
                             ],
+                          ),                       
+                        
+                          child: ListTile(
+                            leading: Icon(
+                              task['status'] == 'done'
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              color: task['status'] == 'done'
+                                  ? Colors.green
+                                  : Colors.indigo,
+                            ),
+                            title: buildHighlightedText(task['title'], searchQuery),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(task['description']),
+                                // const SizedBox(height: 5),
+                                const Divider(height: 16),
+                                
+                                Text(
+                                  formattedDate,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                                const SizedBox(height: 6),
+                                buildStatusBadge(task['status']),
+                              ],
+                            ),
+                            onTap: () => showUpdateDialog(task),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.edit, size: 18),
+                              IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () async {
+                                final confirm = await showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Delete Task'),
+                                    content: const Text('Are you sure?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  ));
+                                  if (confirm == true) {
+                                    deleteTask(task['id']);
+                                  }
+                              },
+                            )],),
                           ),
-                          onTap: () => showUpdateDialog(task),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () => deleteTask(task['id']),
-                          ),
-                        ),
-                      )
-                      );
+                        )
+                      ));
                   },
                 ),
     ),
   ],
 ),
   floatingActionButton: FloatingActionButton(
+    // backgroundColor: Colors.indigo,
+    elevation: 5,
     onPressed: () async {
       final result = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AddTaskScreen(allTasks: allTasks),),
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => AddTaskScreen(allTasks: allTasks),
+          transitionsBuilder: (_, animation, __, child) {
+            return FadeTransition(opacity: animation, child: child,);
+          }
+        )
+        // MaterialPageRoute(builder: (context) => AddTaskScreen(allTasks: allTasks),),
       );
 
       if (result != null) {
@@ -615,7 +723,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
     // fetchTasks();
     },
-    child: const Icon(Icons.add),
+    child: const Icon(Icons.add, size: 24,),
   ),
     );
   }
